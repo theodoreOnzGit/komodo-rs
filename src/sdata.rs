@@ -3,12 +3,15 @@ use std::time::SystemTime;
 use uom::si::{f64::*, time::nanosecond};
 
 
+
+#[inline]
 pub fn get_time(sys_time: SystemTime) -> Time {
     let time_ns: u128 = sys_time.elapsed().unwrap().as_nanos();
 
     return Time::new::<nanosecond>(time_ns as f64);
     
 }
+
 
 // note that the fortran code is as follows, which declares lots 
 // of variables
@@ -17,7 +20,23 @@ pub fn get_time(sys_time: SystemTime) -> Time {
 // integer, parameter :: dp = selected_real_kind(10, 15)
 // 
 // CHARACTER(LEN=100) :: mode
-// 
+// this becomes an enum 
+#[derive(Debug,PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+pub enum CalculationMode {
+    FIXEDSRC,
+    ADJOINT,
+    RODEJECT,
+    BCSEARCH,
+    DEFAULT
+}
+
+impl Default for CalculationMode {
+    fn default() -> Self {
+        CalculationMode::DEFAULT
+    }
+}
+
+
 // INTEGER :: ng     ! number of groups
 // INTEGER :: nmat   ! number of materials
 // 
