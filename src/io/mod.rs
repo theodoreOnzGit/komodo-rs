@@ -253,8 +253,8 @@ pub fn inp_read() -> InputReadStruct {
     // fortran: 
     //
     // CALL inp_echo()
-    let input_string = inp_echo(iname);
-    output_file.write_all(&input_string.into_bytes()).unwrap();
+    inp_echo(iname, &mut output_file);
+
 
     let io_struct = InputReadStruct {
         io_options
@@ -409,7 +409,8 @@ pub fn openfile(_file_unit: i32, iname: String,
 /// REWIND (iunit)
 /// 
 /// END SUBROUTINE inp_echo
-pub fn inp_echo(iname: String) -> String {
+pub fn inp_echo(iname: String,
+    output_file: &mut File){
 
     let mut file = File::open(&iname).unwrap();
     let mut input_string: String =  String::new();
@@ -424,7 +425,6 @@ pub fn inp_echo(iname: String) -> String {
     input_string += "====================INPUT DATA HERE========================\n";
 
     file.read_to_string(&mut input_string).unwrap();
-
-    return input_string;
+    output_file.write_all(&input_string.into_bytes()).unwrap();
 
 }
