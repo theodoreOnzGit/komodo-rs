@@ -1,7 +1,13 @@
 use core::time;
-use std::thread;
+use std::{thread, io};
+
+pub mod cli_parse;
+
+use clap::Parser;
 
 use crate::sdata::CalculationMode;
+
+use self::cli_parse::KomodoArgs;
 
 /// reads input somehow
 pub fn inp_read() -> InputReadStruct {
@@ -132,7 +138,38 @@ pub fn inp_read() -> InputReadStruct {
     //    CALL get_command_argument(1,iname) !Grab the first command line argument
     // ENDIF
     // how does one do input and output in Rust?
+    
+    // note that the command_argument_count is a fortran function,
+    // basically, if no inputs are given, then it will prompt the user 
+    // to give an input name
 
+    let args = KomodoArgs::parse();
+
+    // the purpose of the code is to check if the user supplied an 
+    // input file. If so, then assign the input to a string
+    let input_name = match args.input_file {
+        Some(filepath) => {
+            let iname = filepath.to_str().unwrap();
+        },
+        None => {
+            // allow the user to input filename manually
+            println!("  NOTE : You can also write the input directly after the command");
+            println!("  INPUT NAME : ");
+            let mut input = String::new();
+            let var_name = match io::stdin().read_line(&mut input) {
+                Ok(_bytes) => {
+                    input
+                },
+                Err(_) => {
+                    todo!()
+                },
+            };
+            println!("{}",var_name);
+        },
+    };
+
+    // once input file supplied open it up
+    
 
     let io_struct = InputReadStruct {
         io_options
