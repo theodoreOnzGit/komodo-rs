@@ -1,5 +1,5 @@
 use core::time;
-use std::{thread, io::{self, Write}, path::PathBuf, fs::File};
+use std::{thread, io::{self, Write, Read}, path::PathBuf, fs::File};
 
 pub mod cli_parse;
 
@@ -202,7 +202,7 @@ pub fn inp_read() -> InputReadStruct {
         "input".to_string(), "Input File Open Failed--status".to_string());
 
     // now for the output name,
-    oname = iname + ".out";
+    oname = iname.clone() + ".out";
     oname = oname.trim().to_string();
 
     // start writing an output file 
@@ -212,10 +212,49 @@ pub fn inp_read() -> InputReadStruct {
     // OPEN (UNIT=ounit, FILE=oname, STATUS='REPLACE', ACTION='WRITE')
     let mut output_file = File::create(oname).unwrap();
 
-    // placeholder to write code
-    output_file.write_all(b"Hello, world!").unwrap();
 
-    
+    // scratch files ...
+    //
+    // I have read that these are temporary files 
+    // fortran code:
+    // OPEN (UNIT=umode, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uxsec, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=ugeom, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=ucase, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uesrc, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uiter, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uprnt, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uadf,  STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=ucrod, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=ubcon, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uftem, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=umtem, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=ucden, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=ucbcs, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uejct, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uther, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uxtab, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=ukern, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uextr, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uthet, STATUS='SCRATCH', ACTION='READWRITE')
+    // OPEN (UNIT=uoutp, STATUS='SCRATCH', ACTION='READWRITE')
+    //
+    // scratch files are not saved to disk, but essentially 
+    // act as temporary files with which one can manipulate
+
+    // allocate basically allocates memory 
+    //
+    // fortran: 
+    //
+    // ALLOCATE (farr(ncard)); farr = ADJUSTL(iname)
+
+    // the next step is the input echo, means echo input to output file
+    // 
+    // fortran: 
+    //
+    // CALL inp_echo()
+    let input_string = inp_echo(iname);
+    output_file.write_all(&input_string.into_bytes()).unwrap();
 
     let io_struct = InputReadStruct {
         io_options
@@ -305,5 +344,87 @@ pub fn openfile(_file_unit: i32, iname: String,
      let file = File::open(&iname);
 
      file.unwrap();
+
+}
+
+/// translation of:
+/// SUBROUTINE inp_echo()
+/// !
+/// ! Purpose:
+/// !    To rewrite the input
+/// !
+/// 
+/// IMPLICIT NONE
+/// 
+/// INTEGER :: eof
+/// INTEGER :: nline
+/// 
+/// WRITE(ounit, 2409)
+/// WRITE(ounit, 2411)
+/// WRITE(ounit, 2412)
+/// WRITE(ounit, 2409)
+/// WRITE(ounit, *)
+/// WRITE(ounit, *)
+/// 
+/// if (scr) then
+///   WRITE(*, *)
+///   WRITE(*, *)
+///   WRITE(*, 2409)
+///   WRITE(*, 2411)
+///   WRITE(*, 2412)
+///   WRITE(*, 2409)
+/// #ifdef __GIT
+///   WRITE(*, *)
+///   WRITE(*, *) "GIT COMMIT SHA    : ", __GIT_COMMIT_HASH
+///   WRITE(*, *) "GIT COMMIT DATE   : ", __GIT_DATE
+///   WRITE(*, *) "GIT COMMIT BRANCH : ", __GIT_BRANCH
+///   WRITE(*, *)
+/// #endif
+///   WRITE(*, *)
+///   WRITE(*, *)
+/// end if
+/// 
+/// 
+/// WRITE(ounit,1002) 'STARTS'
+/// 
+/// nline = 0
+/// DO
+///    READ(iunit, '(A200)', IOSTAT=eof) iline
+///    nline = nline + 1
+///    IF (eof < 0) THEN
+///        WRITE(ounit,1002) 'ENDS'
+///        WRITE(ounit,*)
+///        EXIT
+///    END IF
+///    WRITE(ounit, 1001) nline, iline
+/// END DO
+/// 
+/// 2409 FORMAT(11X, '###########################################################')
+/// 2411 FORMAT(11X, '#                 KOMODO Version: 0.2                     #')
+/// 2412 FORMAT(11X, '#           OPEN NUCLEAR REACTOR SIMULATOR                #')
+/// 
+/// 1001 FORMAT (2X, I4, ': ', A200)
+/// 1002 FORMAT    (2X, '=============================INPUT DATA',A7, &
+///                     ' HERE===========================')
+/// REWIND (iunit)
+/// 
+/// END SUBROUTINE inp_echo
+pub fn inp_echo(iname: String) -> String {
+
+    let mut file = File::open(&iname).unwrap();
+    let mut input_string: String =  String::new();
+
+
+    input_string += "###########################################################\n";
+    input_string += "#                 KOMODO-rs Version: 0.1                  #\n";
+    input_string += "#           OPEN NUCLEAR REACTOR SIMULATOR                #\n";
+    input_string += "###########################################################\n";
+    input_string += "\n";
+    input_string += "\n";
+    input_string += "====================INPUT DATA HERE========================\n";
+
+    file.read_to_string(&mut input_string).unwrap();
+
+    return input_string;
 
 }
