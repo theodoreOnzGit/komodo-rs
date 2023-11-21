@@ -1,6 +1,19 @@
 # komodo-rs
 komodo but in rust (?)
 
+# to run 
+
+For example, to run komodo with the IAEA3Ds input file
+```bash
+cargo run -- IAEA3Ds
+```
+
+if you want to use cargo watch 
+```bash
+cargo watch -x "run -- IAEA3Ds" --ignore *.out
+```
+
+
 
 # Acknowledgements 
 

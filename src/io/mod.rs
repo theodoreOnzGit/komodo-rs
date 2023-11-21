@@ -1,5 +1,5 @@
 use core::time;
-use std::{thread, io, path::PathBuf, fs::File};
+use std::{thread, io::{self, Write}, path::PathBuf, fs::File};
 
 pub mod cli_parse;
 
@@ -36,7 +36,7 @@ pub fn inp_read() -> InputReadStruct {
     // CHARACTER(LEN=1) :: ind
 
     let iname: String;
-    let oname: String;
+    let mut oname: String;
     let ind: char;
 
     let mode: CalculationMode;
@@ -193,8 +193,27 @@ pub fn inp_read() -> InputReadStruct {
 
     dbg!(&iname);
     // now attempt to open the file, otherwise throw an error
-    openfile(iunit, iname, 
+    // now I was wondering about fortran's file opening,
+    // it requires a "unit" identifier for which every file needs a unit 
+    // for Rust, this is not really required, so I'll 
+    // probably deprecate this in future rewrites
+    // 
+    openfile(iunit, iname.clone(), 
         "input".to_string(), "Input File Open Failed--status".to_string());
+
+    // now for the output name,
+    oname = iname + ".out";
+    oname = oname.trim().to_string();
+
+    // start writing an output file 
+    // 
+    // fortran code:
+    //
+    // OPEN (UNIT=ounit, FILE=oname, STATUS='REPLACE', ACTION='WRITE')
+    let mut output_file = File::create(oname).unwrap();
+
+    // placeholder to write code
+    output_file.write_all(b"Hello, world!").unwrap();
 
     
 
