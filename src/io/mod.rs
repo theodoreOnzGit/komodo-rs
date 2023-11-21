@@ -1,5 +1,5 @@
 use core::time;
-use std::{thread, io};
+use std::{thread, io, path::PathBuf, fs::File};
 
 pub mod cli_parse;
 
@@ -158,9 +158,9 @@ pub fn inp_read() -> InputReadStruct {
         };
     }
 
-    let input_name = match args.input_file {
+    let input_path: PathBuf = match args.input_file {
         Some(filepath) => {
-            let iname = filepath.to_str().unwrap();
+            filepath
         },
         None => {
             // allow the user to input filename manually
@@ -169,11 +169,33 @@ pub fn inp_read() -> InputReadStruct {
             let mut input = String::new();
             read_input(&mut input);
 
-            // probably need to convert this to a filepath though
+            // probably need to convert this input to a filepath though
+            // idk if this works...
+            
+            let filepath: PathBuf = PathBuf::from(input);
+
+            //dbg!(&filepath);
+            //println!("{:?}",filepath);
+            filepath
         },
     };
-
     // once input file supplied open it up
+    //
+    // fortran code:
+    // iname = TRIM(iname)
+    // 
+    // CALL openFIle (iunit, iname, 'input', 'Input File Open Failed--status')
+    // 
+    // oname = TRIM(iname) // '.out'
+    // oname = TRIM(oname)
+
+    iname = input_path.to_str().unwrap().trim().to_owned();
+
+    dbg!(&iname);
+    // now attempt to open the file, otherwise throw an error
+    openfile(iunit, iname, 
+        "input".to_string(), "Input File Open Failed--status".to_string());
+
     
 
     let io_struct = InputReadStruct {
@@ -228,4 +250,41 @@ impl Into<bool> for CardActive {
             CardActive::Inactive => false,
         }
     }
+}
+
+/// translation of: 
+///
+/// SUBROUTINE openFile(file_unit, iname, file, er_message)
+/// 
+/// INTEGER :: file_unit
+/// CHARACTER(LEN=*) :: iname, file, er_message
+/// INTEGER  :: iost
+/// 
+/// OPEN (UNIT=file_unit, FILE=iname, STATUS='OLD', ACTION='READ', &
+///       IOSTAT = iost)
+/// 
+/// IF (iost /= 0) THEN
+///   WRITE(*,1020) er_message, iost
+///   WRITE(*,*) '  CANNOT FIND '// file //' FILE : ', iname
+///   1020 FORMAT    (2X, A, I6)
+///   STOP
+/// END IF
+/// 
+/// END SUBROUTINE openFile
+///
+/// to be frank, this function merely tries to open the 
+/// file, returning an error if you can't open it
+///
+/// for this, I just try to do a file open 
+/// and unwrap basically does the same thing
+/// the only reason why the file and error message exists 
+/// is to generate the error message
+pub fn openfile(_file_unit: i32, iname: String,
+    _file: String,
+    _er_message: String){
+
+     let file = File::open(&iname);
+
+     file.unwrap();
+
 }
