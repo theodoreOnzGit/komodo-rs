@@ -147,6 +147,17 @@ pub fn inp_read() -> InputReadStruct {
 
     // the purpose of the code is to check if the user supplied an 
     // input file. If so, then assign the input to a string
+    fn read_input(input: &mut String){
+        match io::stdin().read_line(input) {
+            Ok(_bytes) => {
+                input
+            },
+            Err(_) => {
+                todo!()
+            },
+        };
+    }
+
     let input_name = match args.input_file {
         Some(filepath) => {
             let iname = filepath.to_str().unwrap();
@@ -156,15 +167,9 @@ pub fn inp_read() -> InputReadStruct {
             println!("  NOTE : You can also write the input directly after the command");
             println!("  INPUT NAME : ");
             let mut input = String::new();
-            let var_name = match io::stdin().read_line(&mut input) {
-                Ok(_bytes) => {
-                    input
-                },
-                Err(_) => {
-                    todo!()
-                },
-            };
-            println!("{}",var_name);
+            read_input(&mut input);
+
+            // probably need to convert this to a filepath though
         },
     };
 
